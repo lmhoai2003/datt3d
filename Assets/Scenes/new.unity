@@ -436,7 +436,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9cb17005a18e6d744a169e69d38a41bc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  moveSpeed: 6
+  moveSpeed: 10
   jumpForce: 7
   cameraTransform: {fileID: 826287940}
 --- !u!4 &489046574 stripped
