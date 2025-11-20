@@ -22,13 +22,10 @@ public partial struct BossDamageSystem : ISystem
 
         foreach (var (stats, entity) in SystemAPI.Query<RefRW<BossStats>>().WithEntityAccess())
         {
-            // Trừ máu cực nhanh (50 máu/giây) để test cho lẹ
             stats.ValueRW.CurrentHP -= 10f * dt;
 
-            // Kiểm tra chết
             if (stats.ValueRW.CurrentHP <= 0)
             {
-                // XÓA SỔ BOSS
                 ecb.DestroyEntity(entity);
             }
         }

@@ -8,23 +8,19 @@ public class BossHealthBarUI : MonoBehaviour
 
     void Update()
     {
-        // Kiểm tra cầu nối
         if (GameUIBridge.Instance == null) return;
 
-        // 1. Ẩn/Hiện thanh máu tùy vào việc có Boss hay không
         bool hasBoss = GameUIBridge.Instance.HasBoss;
         if (Container.activeSelf != hasBoss)
         {
             Container.SetActive(hasBoss);
         }
 
-        // 2. Nếu có Boss, cập nhật thanh trượt
         if (hasBoss)
         {
             float current = GameUIBridge.Instance.BossHP_Current;
             float max = GameUIBridge.Instance.BossHP_Max;
 
-            // Tính phần trăm
             HealthSlider.value = current / max;
         }
     }
