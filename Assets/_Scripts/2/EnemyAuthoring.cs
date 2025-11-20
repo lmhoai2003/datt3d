@@ -66,28 +66,50 @@ public partial struct EnemySystem : ISystem
 }
 
 // 4. JOB
+// [BurstCompile]
+// public partial struct EnemyJob : IJobEntity
+// {
+//     public float DeltaTime;
+//     public EntityCommandBuffer.ParallelWriter Ecb;
+
+//     void Execute(Entity entity, [ChunkIndexInQuery] int sortKey, ref LocalTransform transform, ref EnemyStats stats)
+//     {
+//         transform.Position.y -= stats.MoveSpeed * DeltaTime; // tạo đất ảo cho quái rơi xuống
+//         float groundLevel = 0f;
+//         if (transform.Position.y < groundLevel)
+//         {
+//             transform.Position.y = groundLevel;
+//         }
+
+//         stats.LifeTime -= DeltaTime;
+
+//         // if (stats.LifeTime <= 0)
+//         // {
+//         //     Ecb.DestroyEntity(sortKey, entity);
+//         // }
+//     }
+// }
+
 [BurstCompile]
 public partial struct EnemyJob : IJobEntity
 {
     public float DeltaTime;
     public EntityCommandBuffer.ParallelWriter Ecb;
-
     void Execute(Entity entity, [ChunkIndexInQuery] int sortKey, ref LocalTransform transform, ref EnemyStats stats)
     {
-        transform.Position.y -= stats.MoveSpeed * DeltaTime; // tạo đất ảo cho quái rơi xuống
+        transform.Position.y -= stats.MoveSpeed * DeltaTime;
         float groundLevel = 0f;
         if (transform.Position.y < groundLevel)
         {
             transform.Position.y = groundLevel;
         }
 
+
+
         stats.LifeTime -= DeltaTime;
-
-        // if (stats.LifeTime <= 0)
-        // {
-        //     Ecb.DestroyEntity(sortKey, entity);
-        // }
+        if (stats.LifeTime <= 0)
+        {
+            Ecb.DestroyEntity(sortKey, entity);
+        }
     }
-
-
 }
