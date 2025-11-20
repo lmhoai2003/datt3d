@@ -1,13 +1,48 @@
+// using Unity.Entities;
+// using Unity.Burst;
+
+// // 1. DATA: Chỉ số của Boss
+// public struct BossStats : IComponentData
+// {
+//     public float MaxHP;
+//     public float CurrentHP;
+// }
+
+// [BurstCompile]
+// public partial struct BossDamageSystem : ISystem
+// {
+//     [BurstCompile]
+//     public void OnUpdate(ref SystemState state)
+//     {
+//         float dt = SystemAPI.Time.DeltaTime;
+        
+//         var ecbSingleton = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
+//         var ecb = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged);
+
+//         foreach (var (stats, entity) in SystemAPI.Query<RefRW<BossStats>>().WithEntityAccess())
+//         {
+//             stats.ValueRW.CurrentHP -= 10f * dt;
+
+//             if (stats.ValueRW.CurrentHP <= 0)
+//             {
+//                 ecb.DestroyEntity(entity);
+//             }
+//         }
+//     }
+// }
+
 using Unity.Entities;
 using Unity.Burst;
+using System.Diagnostics;
 
-// 1. DATA: Chỉ số của Boss
+// 1. DATA (Giữ nguyên)
 public struct BossStats : IComponentData
 {
     public float MaxHP;
     public float CurrentHP;
 }
 
+// 2. SYSTEM (Người quản lý)
 [BurstCompile]
 public partial struct BossDamageSystem : ISystem
 {
@@ -16,18 +51,35 @@ public partial struct BossDamageSystem : ISystem
     {
         float dt = SystemAPI.Time.DeltaTime;
         
-        // Lấy Sổ ghi lệnh (ECB)
+        // BƯỚC 1: Lấy Sổ ghi lệnh (ECB)
         var ecbSingleton = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
-        var ecb = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged);
+        
+        // QUAN TRỌNG: Phải chuyển thành .AsParallelWriter() để nhiều luồng cùng ghi được
+        var ecb = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter();
 
-        foreach (var (stats, entity) in SystemAPI.Query<RefRW<BossStats>>().WithEntityAccess())
+        // BƯỚC 2: Lên lịch Job (Schedule)
+        new BossDamageJob
         {
-            stats.ValueRW.CurrentHP -= 10f * dt;
+            DeltaTime = dt,
+            Ecb = ecb
+        }.ScheduleParallel(); // Chạy song song trên nhiều lõi CPU
+    }
+}
 
-            if (stats.ValueRW.CurrentHP <= 0)
-            {
-                ecb.DestroyEntity(entity);
-            }
+// 3. JOB (Công nhân xử lý)
+[BurstCompile]
+public partial struct BossDamageJob : IJobEntity
+{
+    public float DeltaTime;
+    public EntityCommandBuffer.ParallelWriter Ecb; 
+
+    void Execute(Entity entity, [ChunkIndexInQuery] int sortKey, ref BossStats stats)
+    {
+        stats.CurrentHP -= 10f * DeltaTime;
+        if (stats.CurrentHP <= 0)
+        {
+            Ecb.DestroyEntity(sortKey, entity);
+            // Debug.WriteLine("Boss defeated!");
         }
     }
 }

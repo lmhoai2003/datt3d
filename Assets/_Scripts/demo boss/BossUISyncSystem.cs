@@ -1,12 +1,17 @@
 using Unity.Entities;
 
-// Phải dùng SystemBase vì cần truy cập vào biến static của MonoBehaviour (Bridge)
 public partial class BossUISyncSystem : SystemBase
 {
     protected override void OnUpdate()
     {
         if (GameUIBridge.Instance == null) return;
 
+        // --- DÒNG MỚI THÊM VÀO ---
+        // Ý nghĩa: "Đợi tất cả Job nào đang viết vào BossStats chạy xong đi, rồi tao mới đọc".
+        EntityManager.CompleteDependencyBeforeRO<BossStats>(); 
+        // -------------------------
+
+        // Bây giờ đọc mới an toàn
         if (SystemAPI.TryGetSingleton<BossStats>(out BossStats bossStats))
         {
             GameUIBridge.Instance.HasBoss = true;
