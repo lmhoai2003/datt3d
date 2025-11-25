@@ -5,9 +5,9 @@ using Random = Unity.Mathematics.Random;
 
 public class MonsterSpawnerAuthoring : MonoBehaviour
 {
-    public GameObject MonsterPrefab; // Kéo Prefab Monster vào đây
-    public int Count = 100;          // Số lượng: 100
-    public float Radius = 20f;       // Phạm vi sinh
+    public GameObject MonsterPrefab; 
+    public int Count = 100;          
+    public float Radius = 20f;      
 
     class Baker : Baker<MonsterSpawnerAuthoring>
     {
@@ -34,29 +34,38 @@ public struct MonsterSpawnerComponent : IComponentData
     public Random RandomSeed;
 }
 
-// System để chạy việc sinh quái (chỉ chạy 1 lần lúc đầu)
-[Unity.Burst.BurstCompile] // Thêm dòng này để tối ưu tốc độ spawn
+[Unity.Burst.BurstCompile]
 public partial struct MonsterSpawnerSystem : ISystem
 {
+    public void OnCreate(ref SystemState state)
+    {
+        // --- DÒNG QUAN TRỌNG MỚI THÊM ---
+        // Yêu cầu: Phải tìm thấy ít nhất 1 cái MonsterSpawnerComponent thì mới được chạy OnUpdate
+        // Nếu SubScene chưa load xong -> System sẽ kiên nhẫn chờ.
+        state.RequireForUpdate<MonsterSpawnerComponent>();
+    }
+
     public void OnUpdate(ref SystemState state)
     {
-        // Tắt system sau lần chạy đầu tiên để không spawn liên tục
+        // Khi code chạy vào đây nghĩa là ĐÃ tìm thấy Spawner rồi.
+        
+        // Tắt system ngay để chỉ spawn 1 lần duy nhất
         state.Enabled = false;
 
         foreach (var spawner in SystemAPI.Query<RefRW<MonsterSpawnerComponent>>())
         {
+            // Reset Random Seed mỗi lần chơi lại để vị trí quái thay đổi khác đi
+            // Dùng thời gian hiện tại làm seed
+            spawner.ValueRW.RandomSeed = Random.CreateFromIndex((uint)System.DateTime.Now.Millisecond);
+
             for (int i = 0; i < spawner.ValueRO.Count; i++)
             {
-                // 1. Sinh ra entity
                 var newMonster = state.EntityManager.Instantiate(spawner.ValueRO.Prefab);
-
-                // 2. Random vị trí
+                
+                // Random vị trí
                 float2 randCircle = spawner.ValueRW.RandomSeed.NextFloat2Direction() * spawner.ValueRW.RandomSeed.NextFloat(0, spawner.ValueRO.Radius);
                 
-                float3 position = new float3(randCircle.x, 0, randCircle.y);
-
-                // 3. Đặt vị trí
-                state.EntityManager.SetComponentData(newMonster, Unity.Transforms.LocalTransform.FromPosition(position));
+                state.EntityManager.SetComponentData(newMonster, Unity.Transforms.LocalTransform.FromPosition(new float3(randCircle.x, 0, randCircle.y)));
             }
         }
     }

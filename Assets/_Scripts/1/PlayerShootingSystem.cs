@@ -2,7 +2,7 @@ using Unity.Burst;
 using Unity.Entities;
 using Unity.Transforms;
 using Unity.Mathematics;
-using UnityEngine; // Để debug
+using UnityEngine; 
 
 [BurstCompile]
 public partial struct PlayerShootingSystem : ISystem

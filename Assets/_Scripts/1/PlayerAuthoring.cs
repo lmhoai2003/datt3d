@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class PlayerAuthoring : MonoBehaviour
 {
-    public GameObject BulletPrefab; // Kéo Prefab đạn của Player vào đây
+    public GameObject BulletPrefab; 
 
     class Baker : Baker<PlayerAuthoring>
     {

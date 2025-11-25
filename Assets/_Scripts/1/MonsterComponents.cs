@@ -69,13 +69,26 @@ public struct GameScore : IComponentData
 
 public struct PlayerShootingData : IComponentData
 {
-    public Entity BulletPrefab; // Prefab viên đạn ECS
+    public Entity BulletPrefab; 
 }
 
-// Tag báo hiệu "Tao vừa bấm nút bắn" (Input)
-// (Đây là Tag tạm thời, thêm vào rồi xóa ngay sau khi bắn)
 public struct PlayerShootInput : IComponentData { }
 public struct PlayerBulletConfig : IComponentData
 {
     public Entity BulletPrefab;
+}
+
+public enum GameState
+{
+    Playing, 
+    Won,     
+    Lost    
+}
+
+// Component Singleton để lưu trạng thái toàn cục
+public struct GameStateData : IComponentData
+{
+    public GameState CurrentState;
+    public float GameTimer; 
+    public bool HasSpawned;
 }

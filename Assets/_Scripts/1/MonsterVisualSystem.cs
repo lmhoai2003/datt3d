@@ -26,7 +26,7 @@ public partial class MonsterVisualSystem : SystemBase
         {
             // Tạo GameObject (Cái này an toàn vì nó là của Unity thường, không ảnh hưởng ECS)
             var go = Object.Instantiate(_visualPrefab, trans.Position, trans.Rotation);
-            
+
             // --- SỬA LỖI Ở ĐÂY ---
             // Cũ (Lỗi): EntityManager.AddComponentData(entity, ...); -> Thay đổi cấu trúc khi đang lặp -> LỖI
             // Mới (Đúng): Dùng ecb để ghi lệnh "Lát nữa hãy thêm component này vào nhé"
@@ -48,7 +48,9 @@ public partial class MonsterVisualSystem : SystemBase
             if (sync != null)
             {
                 bool isDead = health.Current <= 0;
-                sync.UpdateVisual(health.IsHit, props.IsAttacking, isDead);
+
+                // TRUYỀN THÊM health.Current VÀO ĐÂY
+                sync.UpdateVisual(health.Current, health.IsHit, props.IsAttacking, isDead);
             }
 
             // Reset cờ

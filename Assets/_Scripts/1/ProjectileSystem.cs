@@ -2,7 +2,7 @@ using Unity.Burst;
 using Unity.Entities;
 using Unity.Transforms;
 using Unity.Mathematics;
-using UnityEngine; // Dùng cho Debug.Log
+using UnityEngine;
 
 [BurstCompile]
 public partial struct ProjectileSystem : ISystem
@@ -13,9 +13,7 @@ public partial struct ProjectileSystem : ISystem
         float dt = SystemAPI.Time.DeltaTime;
         var ecb = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(state.WorldUnmanaged);
 
-        // ------------------------------------------------------------------
-        // PHẦN 1: CHUẨN BỊ DỮ LIỆU PLAYER (Để đạn quái biết đường bắn)
-        // ------------------------------------------------------------------
+
         float3 playerPos = float3.zero;
         Entity playerEntity = Entity.Null;
         bool playerFound = false;
@@ -23,7 +21,7 @@ public partial struct ProjectileSystem : ISystem
         foreach (var (transform, entity) in SystemAPI.Query<RefRO<LocalTransform>>()
                                             .WithEntityAccess()
                                             .WithAll<PlayerTag>()
-                                            .WithNone<DeadTag>()) // Không tìm nếu Player chết
+                                            .WithNone<DeadTag>()) 
         {
             playerPos = transform.ValueRO.Position;
             playerEntity = entity;
@@ -31,10 +29,7 @@ public partial struct ProjectileSystem : ISystem
             break;
         }
 
-        // ------------------------------------------------------------------
-        // PHẦN 2: XỬ LÝ RIÊNG CHO ĐẠN CỦA PLAYER (HOMING + VA CHẠM QUÁI)
-        // ------------------------------------------------------------------
-        // Chỉ lấy những viên đạn có 'PlayerProjectileTag'
+
         foreach (var (trans, data, entity) in SystemAPI.Query<RefRW<LocalTransform>, RefRW<ProjectileData>>()
                                                  .WithEntityAccess()
                                                  .WithAll<ProjectileTag, PlayerProjectileTag>())
@@ -93,14 +88,11 @@ public partial struct ProjectileSystem : ISystem
             if (data.ValueRW.LifeTime <= 0) ecb.DestroyEntity(entity);
         }
 
-        // ------------------------------------------------------------------
-        // PHẦN 3: XỬ LÝ CÁC LOẠI ĐẠN CÒN LẠI (ĐẠN QUÁI / ĐẠN THƯỜNG)
-        // ------------------------------------------------------------------
-        // Query tất cả ProjectileTag NHƯNG loại trừ PlayerProjectileTag ra
+
         foreach (var (trans, data, entity) in SystemAPI.Query<RefRW<LocalTransform>, RefRW<ProjectileData>>()
                                                  .WithEntityAccess()
                                                  .WithAll<ProjectileTag>()
-                                                 .WithNone<PlayerProjectileTag>()) // <--- QUAN TRỌNG: Không xử lý lại đạn Player
+                                                 .WithNone<PlayerProjectileTag>()) 
         {
             // A. DI CHUYỂN (Bay thẳng)
             trans.ValueRW.Position += trans.ValueRO.Forward() * data.ValueRO.Speed * dt;

@@ -867,7 +867,7 @@ Animator:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4916234982049507665}
-  m_Enabled: 1
+  m_Enabled: 0
   m_Avatar: {fileID: 9000000, guid: b51ed164db424ea38696614fa639565a, type: 3}
   m_Controller: {fileID: 9100000, guid: cb76a9889dd44316984379a119683768, type: 2}
   m_CullingMode: 1
@@ -896,7 +896,7 @@ MonoBehaviour:
   MoveSpeed: 4
   DetectionRange: 10
   AttackDistance: 5
-  Health: 100
+  Health: 20
   FireRate: 3
   ProjectilePrefab: {fileID: 6637151511751179897, guid: 6355b22ad926bfc42938991c281bae0b, type: 3}
 --- !u!65 &5322794632498955584
@@ -1210,7 +1210,7 @@ SkinnedMeshRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6514116285856439430}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1

@@ -1,7 +1,7 @@
 using Unity.Entities;
 using Unity.Transforms;
 using Unity.Mathematics;
-using Unity.Collections; // Cần thư viện này để dùng NativeArray
+using Unity.Collections; 
 using UnityEngine;
 
 public partial struct MonsterSystem : ISystem
@@ -44,7 +44,6 @@ public partial struct MonsterSystem : ISystem
                                                                    .WithAll<MonsterTag>()
                                                                    .WithNone<DeadTag>())
         {
-            // A. KIỂM TRA CHẾT
             if (health.ValueRO.Current <= 0)
             {
                 ecb.AddComponent<DeadTag>(entity);
@@ -61,45 +60,32 @@ public partial struct MonsterSystem : ISystem
             // B. TÍNH TOÁN DI CHUYỂN (CÓ NÉ NHAU)
             if (distToPlayer <= props.ValueRO.DetectionRange)
             {
-                // 1. Hướng cơ bản: Đi về phía Player
                 float3 finalDir = math.normalize(playerPos - transform.ValueRO.Position);
-
-                // 2. Hướng né tránh: Kiểm tra các con quái khác
                 float3 separationDir = float3.zero;
                 float separationRadius = 1.5f; // Bán kính "vùng riêng tư" của quái (khoảng 1.5m)
                 int neighborsCount = 0;
 
-                // Duyệt qua danh sách vị trí đã lưu ở trên
                 for (int i = 0; i < allMonsterPositions.Length; i++)
                 {
-                    // Bỏ qua chính mình (dùng index để so sánh tương đối)
                     if (i == index) continue;
 
                     float3 neighborPos = allMonsterPositions[i].Position;
                     float distToNeighbor = math.distance(transform.ValueRO.Position, neighborPos);
-
-                    // Nếu có thằng hàng xóm đứng quá gần
                     if (distToNeighbor < separationRadius && distToNeighbor > 0.1f)
                     {
-                        // Tạo lực đẩy ra xa khỏi hàng xóm
                         float3 pushDir = math.normalize(transform.ValueRO.Position - neighborPos);
-                        
-                        // Càng gần thì đẩy càng mạnh
                         separationDir += pushDir / distToNeighbor;
                         neighborsCount++;
                     }
                 }
 
-                // 3. Tổng hợp lực (70% đi về Player + 30% né nhau)
                 if (neighborsCount > 0)
                 {
-                    // Cộng lực né vào hướng đi
-                    finalDir += separationDir * 3f; // Nhân 1.5 để ưu tiên né hơn là đi
+                    finalDir += separationDir * 5f; // Nhân 1.5 để ưu tiên né hơn là đi
                     finalDir = math.normalize(finalDir);
                 }
 
                 // C. THỰC HIỆN DI CHUYỂN
-                // Quay mặt
                 finalDir.y = 0;
                 if (!math.all(finalDir == 0))
                 {
@@ -107,8 +93,6 @@ public partial struct MonsterSystem : ISystem
                     transform.ValueRW.Rotation = math.slerp(transform.ValueRO.Rotation, targetRot, 10f * dt);
                 }
 
-                // Đi tới (nếu chưa tới tầm bắn)
-                // Lưu ý: Logic né nhau vẫn hoạt động kể cả khi đứng lại bắn (để chúng nó dàn hàng ra)
                 if (distToPlayer > props.ValueRO.AttackDistance || neighborsCount > 0)
                 {
                     transform.ValueRW.Position += finalDir * props.ValueRO.MoveSpeed * dt;

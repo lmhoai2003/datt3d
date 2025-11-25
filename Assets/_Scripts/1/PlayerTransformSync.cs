@@ -2,21 +2,21 @@ using Unity.Entities;
 using Unity.Transforms;
 using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.UI; // <--- MỚI: Cần cái này để dùng Slider
+using UnityEngine.UI; 
 
 public class PlayerTransformSync : MonoBehaviour
 {
     [Header("Cài đặt chỉ số")]
     public float MaxHealth = 100f;
-    public Animator PlayerAnimator; // Kéo Animator của Player vào đây
+    public Animator PlayerAnimator; 
 
     [Header("UI")]
-    public Slider HealthBar; // <--- MỚI: Kéo Slider UI vào đây
+    public Slider HealthBar; 
 
     [Header("Cài đặt tấn công")]
     [Tooltip("Thời gian chờ giữa 2 lần bắn (giây)")]
     public float FireRate = 1.0f; 
-    private float _nextFireTime = 0f; // Biến đếm ngược thời gian
+    private float _nextFireTime = 0f; 
 
     // Các biến nội bộ
     private EntityManager _entityManager;
