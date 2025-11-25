@@ -3,23 +3,23 @@ using UnityEngine;
 public class PlayerMovement : MonoBehaviour
 {
     public float moveSpeed = 6f;
-    public float jumpForce = 7f;
     public Transform cameraTransform;
 
     private Rigidbody rb;
-    private bool isGrounded;
+    private Animator animator;
 
     void Start()
     {
         rb = GetComponent<Rigidbody>();
-        rb.freezeRotation = true; // tránh bị đổ người
+        animator = GetComponent<Animator>();
+        rb.freezeRotation = true;
     }
 
     void Update()
     {
         Move();
-        Jump();
         RotateToMoveDirection();
+        UpdateRunAnimation();
     }
 
     void Move()
@@ -27,7 +27,6 @@ public class PlayerMovement : MonoBehaviour
         float h = Input.GetAxisRaw("Horizontal");
         float v = Input.GetAxisRaw("Vertical");
 
-        // lấy hướng camera nhưng bỏ trục Y
         Vector3 forward = cameraTransform.forward;
         forward.y = 0;
         forward.Normalize();
@@ -39,8 +38,11 @@ public class PlayerMovement : MonoBehaviour
         Vector3 moveDir = forward * v + right * h;
         moveDir.Normalize();
 
-        // velocity giữ lại trục Y (gravity)
-        rb.linearVelocity = new Vector3(moveDir.x * moveSpeed, rb.linearVelocity.y, moveDir.z * moveSpeed);
+        rb.linearVelocity = new Vector3(
+            moveDir.x * moveSpeed,
+            rb.linearVelocity.y,
+            moveDir.z * moveSpeed
+        );
     }
 
     void RotateToMoveDirection()
@@ -55,13 +57,13 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    void Jump()
+    void UpdateRunAnimation()
     {
-        isGrounded = Physics.Raycast(transform.position, Vector3.down, 1.1f);
+        Vector3 flatVel = rb.linearVelocity;
+        flatVel.y = 0;
 
-        if (Input.GetButtonDown("Jump") && isGrounded)
-        {
-            rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
-        }
+        float speed = flatVel.magnitude;
+
+        animator.SetFloat("Speed", speed); // <= animation chạy
     }
 }
