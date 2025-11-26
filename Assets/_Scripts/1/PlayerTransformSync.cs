@@ -113,7 +113,6 @@ public class PlayerTransformSync : MonoBehaviour
         }
         catch (System.Exception)
         {
-            // IM LẶNG LÀ VÀNG: Khi tắt game, lỗi sẽ rơi vào đây và không hiện đỏ lên Console nữa.
             return;
         }
     }

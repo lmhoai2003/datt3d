@@ -19,12 +19,7 @@ public partial struct GameStateSystem : ISystem
         }
 
         RefRW<GameStateData> stateData = SystemAPI.GetSingletonRW<GameStateData>();
-
-        // --- [SỬA ĐỔI] ---
-        // Nếu đang chờ Start -> Dừng lại ngay, không làm gì hết.
-        // Việc chuyển trạng thái sẽ do nút bấm UI (GameUIManager) lo.
         if (stateData.ValueRO.CurrentState == GameState.WaitingToStart) return; 
-        // -----------------
 
         // --- LOGIC KHI GAME ĐANG CHẠY ---
         float dt = SystemAPI.Time.DeltaTime;

@@ -12,8 +12,6 @@ public class PlayerAuthoring : MonoBehaviour
             var entity = GetEntity(TransformUsageFlags.Dynamic);
             
             AddComponent(entity, new PlayerTag());
-
-            // Bake Prefab đạn thành Entity
             AddComponent(entity, new PlayerShootingData
             {
                 BulletPrefab = GetEntity(authoring.BulletPrefab, TransformUsageFlags.Dynamic)

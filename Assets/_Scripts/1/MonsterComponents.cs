@@ -93,13 +93,11 @@ public struct GameScore : IComponentData
 
 public enum GameState
 {
-    WaitingToStart, // <--- MỚI: Thêm trạng thái chờ
+    WaitingToStart, 
     Playing, 
     Won,     
     Lost    
 }
-
-// Component Singleton để lưu trạng thái toàn cục
 public struct GameStateData : IComponentData
 {
     public GameState CurrentState;

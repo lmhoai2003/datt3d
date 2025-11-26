@@ -33,8 +33,6 @@ public class GameUIManager : MonoBehaviour
         if (query.CalculateEntityCount() > 0)
         {
             var stateData = query.GetSingleton<GameStateData>();
-
-            // Tự động tắt bảng Start khi trạng thái chuyển sang Playing
             if (!_isGameStarted && stateData.CurrentState == GameState.Playing)
             {
                 _isGameStarted = true;
@@ -47,7 +45,6 @@ public class GameUIManager : MonoBehaviour
         }
     }
 
-    // --- [MỚI] HÀM GẮN VÀO NÚT START ---
     public void OnStartButtonClicked()
     {
         if (!_entityManager.World.IsCreated) return;

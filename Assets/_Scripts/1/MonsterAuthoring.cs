@@ -19,18 +19,13 @@ public class MonsterAuthoring : MonoBehaviour
         public override void Bake(MonsterAuthoring authoring)
         {
             var entity = GetEntity(TransformUsageFlags.Dynamic);
-
-            // Gắn Tag
             AddComponent(entity, new MonsterTag());
-            
-            // Gắn Máu
             AddComponent(entity, new MonsterHealth
             {
                 Current = authoring.Health,
                 Max = authoring.Health
             });
 
-            // Gắn thuộc tính di chuyển/bắn
             AddComponent(entity, new MonsterProperties
             {
                 MoveSpeed = authoring.MoveSpeed,

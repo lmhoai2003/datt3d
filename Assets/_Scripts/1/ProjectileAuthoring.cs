@@ -1,7 +1,6 @@
 using Unity.Entities;
 using UnityEngine;
 
-// File: ProjectileAuthoring.cs
 public class ProjectileAuthoring : MonoBehaviour
 {
     public float Speed = 10f;
