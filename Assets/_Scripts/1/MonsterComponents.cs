@@ -2,7 +2,7 @@ using Unity.Entities;
 using UnityEngine; // Bắt buộc có để dùng GameObject
 
 // File: MonsterComponents.cs
-// Chứa dữ liệu của Quái và Đạn (Không chứa Player)
+// Cập nhật: Thêm WaitingToStart và PlayerHealthComponent
 
 // --- PHẦN 1: TAG (NHÃN) ---
 public struct MonsterTag : IComponentData { }
@@ -12,6 +12,7 @@ public struct DeadTag : IComponentData { } // Gắn cho ai đã chết
 // Lưu ý: Nếu bạn đã định nghĩa 'PlayerTag' bên file PlayerComponents.cs rồi
 // thì hãy XÓA dòng dưới này đi nhé. Nếu chưa thì giữ lại.
 public struct PlayerTag : IComponentData { } 
+
 // Tag đánh dấu đây là đạn do Player bắn ra
 public struct PlayerProjectileTag : IComponentData { }
 
@@ -19,8 +20,28 @@ public struct PlayerProjectileTag : IComponentData { }
 public struct MonsterProjectileTag : IComponentData { }
 
 
+// --- PHẦN 2: DỮ LIỆU PLAYER (Bổ sung cái này vì bạn đang thiếu) ---
+public struct PlayerHealthComponent : IComponentData
+{
+    public float CurrentHealth;
+    public float MaxHealth;
+    public bool IsHit;
+}
 
-// --- PHẦN 2: DỮ LIỆU QUÁI VẬT ---
+public struct PlayerShootingData : IComponentData
+{
+    public Entity BulletPrefab; 
+}
+
+public struct PlayerShootInput : IComponentData { }
+
+public struct PlayerBulletConfig : IComponentData
+{
+    public Entity BulletPrefab;
+}
+
+
+// --- PHẦN 3: DỮ LIỆU QUÁI VẬT ---
 
 // Chỉ số hành vi & Tấn công
 public struct MonsterProperties : IComponentData
@@ -31,8 +52,7 @@ public struct MonsterProperties : IComponentData
     public float FireRate;            // Tốc độ bắn
     public float FireTimer;           // Bộ đếm thời gian
     public Entity ProjectilePrefab;   // Entity viên đạn
-    public bool IsAttacking;          // Cờ báo hiệu đang tấn công (để chạy Animation)
-    
+    public bool IsAttacking;          // Cờ báo hiệu đang tấn công
 }
 
 // Máu của quái
@@ -40,7 +60,7 @@ public struct MonsterHealth : IComponentData
 {
     public float Current;
     public float Max;
-    public bool IsHit;                // Cờ báo hiệu vừa trúng đạn (để chạy Animation)
+    public bool IsHit;                // Cờ báo hiệu vừa trúng đạn
 }
 
 // Liên kết với GameObject Visual (Hybrid)
@@ -55,31 +75,25 @@ public struct DeathTimer : IComponentData
     public float Value;
 }
 
-// --- PHẦN 3: DỮ LIỆU VIÊN ĐẠN ---
+
+// --- PHẦN 4: DỮ LIỆU VIÊN ĐẠN ---
 public struct ProjectileData : IComponentData
 {
     public float Speed;
     public float LifeTime;
 }
 
+
+// --- PHẦN 5: GAME STATE (TRẠNG THÁI GAME) ---
+
 public struct GameScore : IComponentData
 {
     public int Value;
 }
 
-public struct PlayerShootingData : IComponentData
-{
-    public Entity BulletPrefab; 
-}
-
-public struct PlayerShootInput : IComponentData { }
-public struct PlayerBulletConfig : IComponentData
-{
-    public Entity BulletPrefab;
-}
-
 public enum GameState
 {
+    WaitingToStart, // <--- MỚI: Thêm trạng thái chờ
     Playing, 
     Won,     
     Lost    

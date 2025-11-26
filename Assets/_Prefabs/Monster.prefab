@@ -895,8 +895,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MoveSpeed: 4
   DetectionRange: 10
-  AttackDistance: 5
-  Health: 20
+  AttackDistance: 8
+  Health: 100
   FireRate: 3
   ProjectilePrefab: {fileID: 6637151511751179897, guid: 6355b22ad926bfc42938991c281bae0b, type: 3}
 --- !u!65 &5322794632498955584

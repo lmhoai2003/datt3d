@@ -6,8 +6,8 @@ using Random = Unity.Mathematics.Random;
 public class MonsterSpawnerAuthoring : MonoBehaviour
 {
     public GameObject MonsterPrefab; 
-    public int Count = 100;          
-    public float Radius = 20f;      
+    public int Count = 50;           // (Ví dụ số lượng 50)
+    public float Radius = 20f;       
 
     class Baker : Baker<MonsterSpawnerAuthoring>
     {
@@ -34,19 +34,25 @@ public struct MonsterSpawnerComponent : IComponentData
     public Random RandomSeed;
 }
 
-[Unity.Burst.BurstCompile]
+// [Unity.Burst.BurstCompile] <--- XÓA DÒNG NÀY ĐI VÌ TA DÙNG SYSTEM.DATETIME
 public partial struct MonsterSpawnerSystem : ISystem
 {
     public void OnCreate(ref SystemState state)
     {
-        // --- DÒNG QUAN TRỌNG MỚI THÊM ---
-        // Yêu cầu: Phải tìm thấy ít nhất 1 cái MonsterSpawnerComponent thì mới được chạy OnUpdate
-        // Nếu SubScene chưa load xong -> System sẽ kiên nhẫn chờ.
         state.RequireForUpdate<MonsterSpawnerComponent>();
+        // Yêu cầu thêm cái này để lấy dữ liệu trạng thái
+        state.RequireForUpdate<GameStateData>();
     }
 
     public void OnUpdate(ref SystemState state)
     {
+        var gameState = SystemAPI.GetSingleton<GameStateData>();
+        
+        // --- NẾU ĐANG CHỜ THÌ KHÔNG LÀM GÌ CẢ ---
+        if (gameState.CurrentState == GameState.WaitingToStart) return;
+        // ----------------------------------------
+
+        // state.Enabled = false;
         // Khi code chạy vào đây nghĩa là ĐÃ tìm thấy Spawner rồi.
         
         // Tắt system ngay để chỉ spawn 1 lần duy nhất
@@ -54,8 +60,8 @@ public partial struct MonsterSpawnerSystem : ISystem
 
         foreach (var spawner in SystemAPI.Query<RefRW<MonsterSpawnerComponent>>())
         {
-            // Reset Random Seed mỗi lần chơi lại để vị trí quái thay đổi khác đi
-            // Dùng thời gian hiện tại làm seed
+            // Reset Random Seed theo thời gian thực để vị trí quái thay đổi khác đi mỗi lần chơi
+            // System.DateTime chỉ chạy được khi KHÔNG CÓ BurstCompile
             spawner.ValueRW.RandomSeed = Random.CreateFromIndex((uint)System.DateTime.Now.Millisecond);
 
             for (int i = 0; i < spawner.ValueRO.Count; i++)
