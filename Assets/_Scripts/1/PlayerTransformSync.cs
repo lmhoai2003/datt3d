@@ -9,12 +9,9 @@ public class PlayerTransformSync : MonoBehaviour
     [Header("Cài đặt chỉ số")]
     public float MaxHealth = 100f;
     public Animator PlayerAnimator; 
-
     [Header("UI")]
     public Slider HealthBar; 
-
     [Header("Cài đặt tấn công")]
-    [Tooltip("Thời gian chờ giữa 2 lần bắn (giây)")]
     public float FireRate = 1.0f; 
     private float _nextFireTime = 0f; 
 
@@ -22,63 +19,43 @@ public class PlayerTransformSync : MonoBehaviour
     private Entity _playerEntity;
     private bool _isDead = false;
     private bool _isInitialized = false;
+    private bool _isShootButtonPressed = false;
 
     void Start()
     {
-        // Bọc try-catch để an toàn ngay từ đầu
-        try 
-        {
+        try {
             var world = World.DefaultGameObjectInjectionWorld;
             if (world == null) return;
-
             _entityManager = world.EntityManager;
             _playerEntity = _entityManager.CreateEntity();
-
 #if UNITY_EDITOR
             _entityManager.SetName(_playerEntity, "Player_Ghost_Entity");
 #endif
-            
             _entityManager.AddComponent<PlayerTag>(_playerEntity);
             _entityManager.AddComponent<LocalTransform>(_playerEntity);
-
             _entityManager.AddComponentData(_playerEntity, new PlayerHealthComponent
             {
-                CurrentHealth = MaxHealth,
-                MaxHealth = MaxHealth,
-                IsHit = false
+                CurrentHealth = MaxHealth, MaxHealth = MaxHealth, IsHit = false
             });
-
-            if (HealthBar != null)
-            {
-                HealthBar.maxValue = MaxHealth;
-                HealthBar.value = MaxHealth;
-            }
-
+            if (HealthBar != null) { HealthBar.maxValue = MaxHealth; HealthBar.value = MaxHealth; }
             _isInitialized = true;
-        }
-        catch (System.Exception)
-        {
-            // Nếu lỗi ngay lúc start (hiếm), bỏ qua luôn
-        }
+        } catch {}
     }
+
+    public void OnShootButtonDown() { _isShootButtonPressed = true; }
 
     void Update()
     {
         if (!_isInitialized || _isDead) return;
 
-        // --- [FIX TRIỆT ĐỂ] DÙNG TRY-CATCH ---
-        // Nếu có bất kỳ lỗi truy cập bộ nhớ nào (do game đang tắt), nó sẽ nhảy vào catch và lờ đi.
         try
         {
-            // 1. Kiểm tra thế giới còn sống không
             if (World.DefaultGameObjectInjectionWorld == null) return;
             if (!_entityManager.Exists(_playerEntity)) return;
 
-            // 2. ĐỒNG BỘ VỊ TRÍ
             _entityManager.SetComponentData(_playerEntity, LocalTransform.FromPositionRotation(transform.position, transform.rotation));
 
-            // 3. XỬ LÝ BẮN SÚNG
-            if (Input.GetMouseButtonDown(1)) 
+            if (Input.GetMouseButtonDown(1) || _isShootButtonPressed) 
             {
                 if (Time.time >= _nextFireTime)
                 {
@@ -89,11 +66,10 @@ public class PlayerTransformSync : MonoBehaviour
                         if (PlayerAnimator != null) PlayerAnimator.SetTrigger("Attack"); 
                     }
                 }
+                _isShootButtonPressed = false;
             }
 
-            // 4. ĐỒNG BỘ TRẠNG THÁI
             var healthData = _entityManager.GetComponentData<PlayerHealthComponent>(_playerEntity);
-
             if (HealthBar != null) HealthBar.value = healthData.CurrentHealth;
 
             if (healthData.IsHit)
@@ -101,74 +77,79 @@ public class PlayerTransformSync : MonoBehaviour
                 healthData.IsHit = false;
                 _entityManager.SetComponentData(_playerEntity, healthData);
 
-                if (healthData.CurrentHealth <= 0)
-                {
-                    Die();
-                }
-                else
-                {
-                    if(PlayerAnimator != null) PlayerAnimator.SetTrigger("Hit");
-                }
+                if (healthData.CurrentHealth <= 0) Die();
+                else if(PlayerAnimator != null) PlayerAnimator.SetTrigger("Hit");
             }
         }
-        catch (System.Exception)
-        {
-            return;
-        }
+        catch {}
     }
 
     void Die()
     {
         if (_isDead) return;
         _isDead = true;
-        Debug.Log("GAME OVER!");
+        
+        try {
+            if (World.DefaultGameObjectInjectionWorld != null && _entityManager.Exists(_playerEntity))
+                _entityManager.AddComponent<DeadTag>(_playerEntity);
+        } catch {}
 
+        if (PlayerAnimator != null) {
+            PlayerAnimator.ResetTrigger("Hit"); PlayerAnimator.ResetTrigger("Attack"); PlayerAnimator.SetTrigger("Dead");
+        }
+
+        var rb = GetComponent<Rigidbody>();
+        if (rb != null) { rb.linearVelocity = Vector3.zero; rb.angularVelocity = Vector3.zero; rb.isKinematic = true; }
+        
+        var moveScript = GetComponent<PlayerMobileMovement>(); 
+        if (moveScript != null) moveScript.enabled = false;
+    }
+
+    // --- [MỚI] HÀM HỒI SINH ---
+    public void Revive()
+    {
+        Debug.Log("PLAYER HỒI SINH!");
+        _isDead = false;
+
+        // 1. Reset ECS
         try
         {
-            if (World.DefaultGameObjectInjectionWorld != null && _entityManager.Exists(_playerEntity))
+            if (_entityManager.Exists(_playerEntity))
             {
-                _entityManager.AddComponent<DeadTag>(_playerEntity);
+                if (_entityManager.HasComponent<DeadTag>(_playerEntity))
+                    _entityManager.RemoveComponent<DeadTag>(_playerEntity);
+
+                var hp = _entityManager.GetComponentData<PlayerHealthComponent>(_playerEntity);
+                hp.CurrentHealth = MaxHealth;
+                _entityManager.SetComponentData(_playerEntity, hp);
+                PlayerAnimator.SetTrigger("hoisinh");
             }
         }
-        catch {} // Bỏ qua lỗi nếu ECS đã sập
+        catch {}
 
+        // 2. Reset Animation
         if (PlayerAnimator != null)
         {
-            PlayerAnimator.ResetTrigger("Hit"); 
-            PlayerAnimator.ResetTrigger("Attack");
-            PlayerAnimator.SetTrigger("Dead");
+            PlayerAnimator.ResetTrigger("Dead");
+            PlayerAnimator.Play("Idle", 0, 0); 
         }
 
-        // --- FIX LỖI VÀNG (Kinematic) ---
-        // Phải dừng vận tốc TRƯỚC, rồi mới khóa Kinematic
+        // 3. Reset UI
+        if (HealthBar != null) HealthBar.value = MaxHealth;
+
+        // 4. Reset Vật lý & Di chuyển
         var rb = GetComponent<Rigidbody>();
-        if (rb != null)
-        {
-            rb.linearVelocity = Vector3.zero; // Dừng lại trước
-            rb.angularVelocity = Vector3.zero;
-            rb.isKinematic = true;            // Rồi mới khóa
-        }
+        if (rb != null) { rb.isKinematic = false; }
 
-        var movement = GetComponent<MonoBehaviour>(); 
-        if (movement != null && movement != this) movement.enabled = false;
+        var moveScript = GetComponent<PlayerMobileMovement>(); 
+        if (moveScript != null) moveScript.enabled = true;
     }
 
     void OnDestroy()
     {
-        // Bọc try-catch cho chắc ăn
-        try
-        {
-            if (!_isInitialized) return;
-            if (World.DefaultGameObjectInjectionWorld == null) return;
-            
-            if (_entityManager.Exists(_playerEntity))
-            {
-                _entityManager.DestroyEntity(_playerEntity);
-            }
-        }
-        catch (System.Exception)
-        {
-            // Bỏ qua lỗi khi tắt game
-        }
+        try {
+            if (!_isInitialized || World.DefaultGameObjectInjectionWorld == null) return;
+            if (_entityManager.Exists(_playerEntity)) _entityManager.DestroyEntity(_playerEntity);
+        } catch {}
     }
 }
